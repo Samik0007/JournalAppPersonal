@@ -1,0 +1,48 @@
+.jl-container{
+    padding-top:16px;
+    padding-bottom:24px;
+}
+
+.jl-controls{
+    padding:12px;
+}
+
+.jl-controls-row{
+    flex-wrap:wrap;
+}
+
+.jl-search{
+    min-width:260px;
+    flex:1;
+}
+
+.jl-filters{
+    padding:12px;
+}
+
+.jl-tags{
+    flex-wrap:wrap;
+}
+
+.jl-loading{
+    padding:24px;
+    text-align:center;
+}
+
+.jl-empty{
+    padding:24px;
+    text-align:center;
+}
+
+.jl-card{
+    width:100%;
+}
+
+.jl-preview{
+    margin-top:8px;
+}
+
+.jl-entry-tags{
+    margin-top:8px;
+    flex-wrap:wrap;
+}

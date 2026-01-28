@@ -1,0 +1,416 @@
+@page "/journal-list"
+@using JournalPersonalApp.Data.Models
+@using JournalPersonalApp.Data.Abstractions
+@inject IJournalEntryService JournalService
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="jl-container">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.h4">Journal Entries</MudText>
+
+        <MudPaper Elevation="1" Class="jl-controls">
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="jl-controls-row">
+                <MudTextField @bind-Value="searchTerm"
+                              Placeholder="Search title or content..."
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              DebounceInterval="300"
+                              OnDebounceIntervalElapsed="HandleSearch"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Class="jl-search" />
+
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.FilterList" OnClick="ToggleFilters">
+                    @(showFilters ? "Hide Filters" : "Show Filters")
+                </MudButton>
+
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="NavigateToNewEntry">
+                    New Entry
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+
+        @if (showFilters)
+        {
+            <MudPaper Elevation="1" Class="jl-filters">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.subtitle2">Mood</MudText>
+                        <MudSelect T="string" @bind-Value="selectedMoodFilter" Variant="Variant.Outlined" Dense="true">
+                            <MudSelectItem Value="@("all")">All</MudSelectItem>
+                            <MudSelectItem Value="@("positive")">Positive</MudSelectItem>
+                            <MudSelectItem Value="@("neutral")">Neutral</MudSelectItem>
+                            <MudSelectItem Value="@("negative")">Negative</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" md="8">
+                        <MudText Typo="Typo.subtitle2">Tags</MudText>
+                        @if (availableTags.Count == 0)
+                        {
+                            <MudText Typo="Typo.caption">No tags available.</MudText>
+                        }
+                        else
+                        {
+                            <MudSelect T="string" 
+                                       MultiSelection="true"
+                                       @bind-SelectedValues="selectedTagsCollection"
+                                       Variant="Variant.Outlined" 
+                                       Dense="true"
+                                       Placeholder="Select tags to filter..."
+                                       AdornmentIcon="@Icons.Material.Filled.Tag"
+                                       Adornment="Adornment.Start">
+                                @foreach (var tag in availableTags)
+                                {
+                                    <MudSelectItem T="string" Value="@tag">@tag</MudSelectItem>
+                                }
+                            </MudSelect>
+                        }
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.subtitle2">Start Date</MudText>
+                        <MudDatePicker @bind-Date="startDate"
+                                       Variant="Variant.Outlined"
+                                       Dense="true"
+                                       Placeholder="Select start date"
+                                       Clearable="true"
+                                       AdornmentIcon="@Icons.Material.Filled.CalendarToday"
+                                       Adornment="Adornment.Start" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.subtitle2">End Date</MudText>
+                        <MudDatePicker @bind-Date="endDate"
+                                       Variant="Variant.Outlined"
+                                       Dense="true"
+                                       Placeholder="Select end date"
+                                       Clearable="true"
+                                       AdornmentIcon="@Icons.Material.Filled.CalendarToday"
+                                       Adornment="Adornment.Start" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ClearAll" OnClick="ClearFilters">
+                                Clear Filters
+                            </MudButton>
+                            <MudText Typo="Typo.caption">Showing @filteredEntries.Count of @allEntries.Count</MudText>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+
+        @if (isLoading)
+        {
+            <MudPaper Elevation="0" Class="jl-loading">
+                <MudProgressCircular Indeterminate="true" />
+                <MudText Typo="Typo.body2">Loading...</MudText>
+            </MudPaper>
+        }
+        else if (filteredEntries.Count == 0)
+        {
+            <MudPaper Elevation="1" Class="jl-empty">
+                <MudText Typo="Typo.h6">No entries found.</MudText>
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="NavigateToNewEntry">Create Entry</MudButton>
+            </MudPaper>
+        }
+        else
+        {
+            <MudGrid Spacing="2">
+                @foreach (var entry in GetPaginatedEntries())
+                {
+                    <MudItem xs="12">
+                        <MudCard Elevation="1" Class="jl-card">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6">@entry.Title</MudText>
+                                    <MudText Typo="Typo.caption">@entry.EntryDate.ToString("MMM dd, yyyy")</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudChip T="string" Size="MudBlazor.Size.Small" Variant="Variant.Outlined">@GetMoodDisplayName(entry.PrimaryMood)</MudChip>
+                                <MudText Typo="Typo.body2" Class="jl-preview">@((MarkupString)GetPreviewHtml(entry.Description))</MudText>
+
+                                @if (entry.JournalEntryTags?.Any() == true)
+                                {
+                                    <MudStack Row="true" Spacing="1" Class="jl-entry-tags">
+                                        @foreach (var t in entry.JournalEntryTags.Take(8))
+                                        {
+                                            <MudChip T="string" Size="MudBlazor.Size.Small" Variant="Variant.Text">@t.Tag?.Name</MudChip>
+                                        }
+                                    </MudStack>
+                                }
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="@(() => ViewEdit(entry.Id))">View/Edit</MudButton>
+                                <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteEntry(entry.Id))">Delete</MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+
+            @if (TotalPages > 1)
+            {
+                <MudPagination Count="@TotalPages" Selected="@currentPage" SelectedChanged="@OnPageChanged" />
+            }
+        }
+    </MudStack>
+</MudContainer>
+
+@code {
+    private List<Journalentry> allEntries = new();
+    private List<Journalentry> filteredEntries = new();
+
+    private bool isLoading = true;
+    private bool showFilters;
+
+    private int currentPage = 1;
+    private readonly int pageSize = 5;
+
+    private string searchTerm = string.Empty;
+
+    private string _selectedMoodFilter = "all";
+    private string selectedMoodFilter
+    {
+        get => _selectedMoodFilter;
+        set
+        {
+            if (_selectedMoodFilter != value)
+            {
+                _selectedMoodFilter = value;
+                _ = ApplyFiltersAsync();
+            }
+        }
+    }
+
+    private IEnumerable<string> _selectedTagsCollection = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    private IEnumerable<string> selectedTagsCollection
+    {
+        get => _selectedTagsCollection;
+        set
+        {
+            _selectedTagsCollection = value;
+            currentPage = 1;
+            _ = ApplyFiltersAsync();
+        }
+    }
+
+    private List<string> availableTags = new();
+
+    private DateTime? _startDate;
+    private DateTime? startDate
+    {
+        get => _startDate;
+        set
+        {
+            if (_startDate != value)
+            {
+                _startDate = value;
+                currentPage = 1;
+                _ = ApplyFiltersAsync();
+            }
+        }
+    }
+
+    private DateTime? _endDate;
+    private DateTime? endDate
+    {
+        get => _endDate;
+        set
+        {
+            if (_endDate != value)
+            {
+                _endDate = value;
+                currentPage = 1;
+                _ = ApplyFiltersAsync();
+            }
+        }
+    }
+
+    private int TotalPages => filteredEntries.Count == 0 ? 1 : (int)Math.Ceiling(filteredEntries.Count / (double)pageSize);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntriesAsync();
+    }
+
+    private async Task LoadEntriesAsync()
+    {
+        isLoading = true;
+        try
+        {
+            allEntries = await JournalService.GetAllAsync() ?? new List<Journalentry>();
+            await LoadTagsAsync();
+            await ApplyFiltersAsync();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadTagsAsync()
+    {
+        try
+        {
+            var custom = await JournalService.GetCustomTagsAsync();
+            var prebuilt = await JournalService.GetPrebuiltTagsAsync();
+            availableTags = custom.Concat(prebuilt)
+                .Select(t => t.Name?.Trim())
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Where(n => n!.Length > 1)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(n => n)
+                .ToList()!;
+        }
+        catch
+        {
+            availableTags = new List<string>();
+        }
+    }
+
+    private void ToggleFilters() => showFilters = !showFilters;
+
+    private async Task HandleSearch()
+    {
+        currentPage = 1;
+        await ApplyFiltersAsync();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = string.Empty;
+        selectedMoodFilter = "all";
+        _selectedTagsCollection = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        startDate = null;
+        endDate = null;
+        currentPage = 1;
+        await ApplyFiltersAsync();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        var result = new List<Journalentry>(allEntries);
+
+        // Apply date range filter using service method
+        if (startDate.HasValue || endDate.HasValue)
+        {
+            var start = startDate ?? DateTime.MinValue;
+            var end = endDate ?? DateTime.MaxValue;
+            
+            var dateFilteredEntries = await JournalService.GetEntriesByDateRangeAsync(start, end);
+            result = result.Intersect(dateFilteredEntries ?? new List<Journalentry>(), new JournalEntryComparer()).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+
+            // Local search ensures Title is included even if service search changes.
+            result = result.Where(j =>
+                    (!string.IsNullOrWhiteSpace(j.Title) && j.Title.Contains(term, StringComparison.OrdinalIgnoreCase))
+                 || (!string.IsNullOrWhiteSpace(j.Description) && j.Description.Contains(term, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+        }
+
+        if (selectedMoodFilter != "all")
+        {
+            var moodResults = new List<Journalentry>();
+            foreach (var mood in GetMoodsForCategory(selectedMoodFilter))
+            {
+                var entries = await JournalService.GetEntriesByMoodAsync(mood);
+                if (entries != null)
+                    moodResults.AddRange(entries);
+            }
+
+            result = result.Intersect(moodResults, new JournalEntryComparer()).ToList();
+        }
+
+        if (_selectedTagsCollection.Any())
+        {
+            var selectedTagsList = _selectedTagsCollection.ToList();
+            List<Journalentry>? tagResults;
+            if (selectedTagsList.Count == 1)
+                tagResults = await JournalService.GetEntriesByTagAsync(selectedTagsList.First());
+            else
+                tagResults = await JournalService.GetEntriesByMultipleTagsAsync(selectedTagsList);
+
+            result = result.Intersect(tagResults ?? new List<Journalentry>(), new JournalEntryComparer()).ToList();
+        }
+
+        filteredEntries = result.OrderByDescending(e => e.EntryDate).ToList();
+        StateHasChanged();
+    }
+
+    private IEnumerable<Journalentry> GetPaginatedEntries()
+        => filteredEntries.Skip((currentPage - 1) * pageSize).Take(pageSize);
+
+    private void OnPageChanged(int page)
+    {
+        currentPage = page;
+    }
+
+    private void NavigateToNewEntry() => Navigation.NavigateTo("/write-journal");
+
+    private void ViewEdit(Guid id) => Navigation.NavigateTo($"/edit-journal/{id}");
+
+    private async Task DeleteEntry(Guid id)
+    {
+        var ok = await JournalService.DeleteAsync(id);
+        if (ok)
+            await LoadEntriesAsync();
+    }
+
+    private static string GetPreviewHtml(string htmlContent)
+    {
+        if (string.IsNullOrWhiteSpace(htmlContent))
+            return "<p><em>No content</em></p>";
+
+        var plainText = System.Text.RegularExpressions.Regex.Replace(htmlContent, "<.*?>", string.Empty);
+        if (plainText.Length <= 200)
+            return htmlContent;
+
+        var truncated = plainText[..200] + "...";
+        return $"<p>{System.Net.WebUtility.HtmlEncode(truncated)}</p>";
+    }
+
+    private static string GetMoodDisplayName(MoodCategory mood)
+        => mood switch
+        {
+            MoodCategory.Happy or MoodCategory.Excited or MoodCategory.Relaxed
+                or MoodCategory.Grateful or MoodCategory.Confident => "Positive",
+            MoodCategory.Sad or MoodCategory.Angry or MoodCategory.Stressed
+                or MoodCategory.Lonely or MoodCategory.Anxious => "Negative",
+            _ => "Neutral"
+        };
+
+    private static List<MoodCategory> GetMoodsForCategory(string category)
+        => category switch
+        {
+            "positive" => new()
+            {
+                MoodCategory.Happy, MoodCategory.Excited, MoodCategory.Relaxed,
+                MoodCategory.Grateful, MoodCategory.Confident
+            },
+            "negative" => new()
+            {
+                MoodCategory.Sad, MoodCategory.Angry, MoodCategory.Stressed,
+                MoodCategory.Lonely, MoodCategory.Anxious
+            },
+            "neutral" => new()
+            {
+                MoodCategory.Calm, MoodCategory.Thoughtful, MoodCategory.Curious,
+                MoodCategory.Nostalgic, MoodCategory.Bored
+            },
+            _ => new()
+        };
+
+    private sealed class JournalEntryComparer : IEqualityComparer<Journalentry>
+    {
+        public bool Equals(Journalentry? x, Journalentry? y) => x?.Id == y?.Id;
+        public int GetHashCode(Journalentry obj) => obj.Id.GetHashCode();
+    }
+}
