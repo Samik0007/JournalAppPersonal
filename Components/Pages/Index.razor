@@ -1,0 +1,18 @@
+@page "/"
+@layout EmptyLayout
+
+@inject NavigationManager Nav
+
+<div class="splash">
+    <div class="splash-inner">
+        <div class="splash-mark">JP</div>
+        <div class="splash-text">Loading…</div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.NavigateTo("/login", true);
+    }
+}

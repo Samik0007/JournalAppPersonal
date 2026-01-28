@@ -1,33 +1,56 @@
+/* Light Theme Colors */
+.page.light-theme {
+    --bg-main: #ffffff;
+    --bg-page: #ffffff;
+    --bg-toprow: #f7f7f7;
+    --bg-sidebar: #000000;
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --border-color: #d6d5d5;
+}
+
+/* Dark Theme Colors */
+.page.dark-theme {
+    --bg-main: #2b2b2b;
+    --bg-page: #1e1e1e;
+    --bg-toprow: #2d2d2d;
+    --bg-sidebar: #000000;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --border-color: #404040;
+}
+
 .page {
     position: relative;
     display: flex;
     flex-direction: column;
-    background-color: #ffffff;
+    background-color: var(--bg-page);
 }
 
 main {
     flex: 1;
-    background-color: #ffffff;
+    background-color: var(--bg-main);
 }
 
 .sidebar {
-    background: #000000;
+    background: var(--bg-sidebar);
 }
 
 .top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
+    background-color: var(--bg-toprow);
+    border-bottom: 1px solid var(--border-color);
     justify-content: flex-end;
     height: 3.5rem;
     display: flex;
     align-items: center;
+    gap: 1rem;
 }
 
     .top-row ::deep a, .top-row ::deep .btn-link {
         white-space: nowrap;
         margin-left: 1.5rem;
         text-decoration: none;
-        color: #000000;
+        color: var(--text-primary);
     }
 
     .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
@@ -39,8 +62,19 @@ main {
         text-overflow: ellipsis;
     }
 
+    /* Theme Toggle Button */
+    ::deep .theme-toggle-btn {
+        color: var(--text-primary) !important;
+        transition: all 0.3s ease;
+    }
+
+    ::deep .theme-toggle-btn:hover {
+        background-color: rgba(128, 128, 128, 0.1) !important;
+        transform: rotate(180deg);
+    }
+
 .content {
-    color: #000000;
+    color: var(--text-primary);
 }
 
 @media (max-width: 640.98px) {

@@ -1,6 +1,7 @@
 ﻿@using MudBlazor
 @using JournalPersonalApp.Data.Abstractions
 @inject IThemeService ThemeService
+@inject IJSRuntime JS
 @inherits LayoutComponentBase
 @implements IDisposable
 
@@ -9,7 +10,7 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<div class="page">
+<div class="page @(_isDarkMode ? "dark-theme" : "light-theme")">
     <div class="sidebar">
         <NavMenu />
     </div>
@@ -19,7 +20,8 @@
             <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                            Color="MudBlazor.Color.Inherit"
                            OnClick="ToggleTheme"
-                           Title="@(_isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode")" />
+                           Title="@(_isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode")"
+                           Class="theme-toggle-btn" />
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div>
 
@@ -64,12 +66,37 @@
         };
     }
 
-    private void ToggleTheme()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Apply theme to HTML element
+            await ApplyThemeToHtml();
+        }
+    }
+
+    private async Task ToggleTheme()
     {
         _isDarkMode = !_isDarkMode;
         var newTheme = _isDarkMode ? AppThemeMode.Dark : AppThemeMode.Light;
         ThemeService.SetTheme(newTheme);
+        
+        // Apply theme to HTML element
+        await ApplyThemeToHtml();
+        
         StateHasChanged();
+    }
+
+    private async Task ApplyThemeToHtml()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("themeHelper.applyTheme", _isDarkMode);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error applying theme to HTML: {ex.Message}");
+        }
     }
 
     public void Dispose()
