@@ -32,6 +32,7 @@ public interface IJournalEntryService
     Task<bool> DeleteAsync(Guid id);
 
     Task<List<Journalentry>> SearchByContentAsync(string searchTerm);
+    Task<List<Journalentry>> SearchByTitleAsync(string searchTerm);
     Task<List<Journalentry>> GetEntriesByDateRangeAsync(DateTime startDate, DateTime endDate);
     Task<List<Journalentry>> GetEntriesByMoodAsync(MoodCategory mood);
     Task<List<Journalentry>> GetEntriesByMoodAndDateAsync(MoodCategory mood, DateTime startDate, DateTime endDate);

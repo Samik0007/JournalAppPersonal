@@ -243,6 +243,24 @@ namespace JournalPersonalApp.Data.Services
             }
         }
 
+        /// Searches journal entries by title only
+        public async Task<List<Journalentry>> SearchByTitleAsync(string searchTerm)
+        {
+            try
+            {
+                return await _context.JournalEntries
+                    .Include(j => j.JournalEntryTags)
+                    .ThenInclude(et => et.Tag)
+                    .Where(j => j.Title.Contains(searchTerm))
+                    .OrderByDescending(j => j.EntryDate)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Error searching journal entries by title.", ex);
+            }
+        }
+
         /// Searches journal entries by date range
         public async Task<List<Journalentry>> GetEntriesByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
