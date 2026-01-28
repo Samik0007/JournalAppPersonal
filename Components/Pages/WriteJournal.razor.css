@@ -1,111 +1,136 @@
 /* ========================================
-   BLACK AND WHITE THEME FOR WRITE JOURNAL
+   THEME-AWARE WRITE JOURNAL STYLES
    ======================================== */
+
+/* Theme Variables for Light Mode */
+:root {
+    --journal-bg-primary: #ffffff;
+    --journal-bg-secondary: #f5f5f5;
+    --journal-border: #000000;
+    --journal-text-primary: #000000;
+    --journal-text-secondary: #666666;
+    --journal-button-bg: #000000;
+    --journal-button-text: #ffffff;
+}
+
+/* Theme Variables for Dark Mode */
+html.dark-mode {
+    --journal-bg-primary: #1e1e1e;
+    --journal-bg-secondary: #2d2d2d;
+    --journal-border: #ffffff;
+    --journal-text-primary: #ffffff;
+    --journal-text-secondary: #b0b0b0;
+    --journal-button-bg: #ffffff;
+    --journal-button-text: #000000;
+}
 
 /* Main Container */
 .journal-paper {
-    background: #ffffff !important;
-    border: 2px solid #000000 !important;
+    background: var(--journal-bg-primary) !important;
+    border: 2px solid var(--journal-border) !important;
     border-radius: 8px !important;
 }
 
 /* Typography */
 .journal-title {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
     font-weight: 700 !important;
-    border-bottom: 2px solid #000000;
+    border-bottom: 2px solid var(--journal-border);
     padding-bottom: 1rem;
 }
 
 .section-title {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
     font-weight: 600 !important;
 }
 
 .section-subtitle {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
     font-weight: 500 !important;
 }
 
 .hint-text {
-    color: #666666 !important;
+    color: var(--journal-text-secondary) !important;
 }
 
 /* MudBlazor Input Overrides */
 .journal-input ::deep .mud-input-slot {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
 }
 
 .journal-input ::deep .mud-input-root {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
 }
 
 .journal-input ::deep .mud-input-label {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
 }
 
 .journal-input ::deep .mud-input-outlined {
-    border-color: #000000 !important;
+    border-color: var(--journal-border) !important;
 }
 
 .journal-input ::deep .mud-input-outlined:hover:not(.mud-disabled) fieldset {
-    border-color: #000000 !important;
+    border-color: var(--journal-border) !important;
 }
 
 .journal-input ::deep .mud-input-outlined.mud-input-focused fieldset {
-    border-color: #000000 !important;
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1) !important;
+    border-color: var(--journal-border) !important;
+    box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.2) !important;
 }
 
 .journal-input ::deep .mud-select-input {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
 }
 
 /* Quill Editor */
 .editor-paper {
-    border: 2px solid #000000 !important;
+    border: 2px solid var(--journal-border) !important;
     border-radius: 6px !important;
-    background: #ffffff !important;
+    background: var(--journal-bg-primary) !important;
 }
 
 #journal-quill {
-    background: #ffffff !important;
+    background: var(--journal-bg-primary) !important;
     min-height: 250px;
 }
 
 .ql-container {
     font-size: 1rem;
     border: none !important;
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
+    background-color: var(--journal-bg-primary) !important;
 }
 
 .ql-editor {
     min-height: 200px;
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
+    background-color: var(--journal-bg-primary) !important;
 }
 
 .ql-toolbar {
-    border-bottom: 1px solid #000000 !important;
+    border-bottom: 1px solid var(--journal-border) !important;
     border-top: none !important;
     border-left: none !important;
     border-right: none !important;
+    background-color: var(--journal-bg-secondary) !important;
 }
 
 /* Mood Radio Buttons */
 .mood-radio ::deep .mud-radio {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
 }
 
 .mood-radio ::deep .mud-radio.Mud-checked {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
 }
 
 .mood-radio ::deep .mud-typography {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
 }
 
 .mood-radio ::deep .mud-radio-content {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
 }
 
 /* Mood Checkboxes */
@@ -121,7 +146,7 @@
     gap: 8px;
     cursor: pointer;
     font-size: 0.95rem;
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
     font-weight: 500;
 }
 
@@ -129,7 +154,7 @@
     cursor: pointer;
     width: 18px;
     height: 18px;
-    border: 2px solid #000000;
+    border: 2px solid var(--journal-border);
 }
 
 .mood-checkbox-label input[type="checkbox"]:disabled {
@@ -145,9 +170,9 @@
     max-height: 200px;
     overflow-y: auto;
     padding: 12px;
-    border: 2px solid #000000;
+    border: 2px solid var(--journal-border);
     border-radius: 6px;
-    background: #f5f5f5;
+    background: var(--journal-bg-secondary);
 }
 
 .prebuilt-tags-grid::-webkit-scrollbar {
@@ -155,20 +180,20 @@
 }
 
 .prebuilt-tags-grid::-webkit-scrollbar-track {
-    background: #ffffff;
+    background: var(--journal-bg-primary);
 }
 
 .prebuilt-tags-grid::-webkit-scrollbar-thumb {
-    background: #000000;
+    background: var(--journal-border);
     border-radius: 4px;
 }
 
 .prebuilt-tag-button {
     padding: 8px 12px;
-    border: 2px solid #000000;
+    border: 2px solid var(--journal-border);
     border-radius: 6px;
-    background: #ffffff;
-    color: #000000;
+    background: var(--journal-bg-primary);
+    color: var(--journal-text-primary);
     cursor: pointer;
     font-size: 0.875rem;
     font-weight: 600;
@@ -177,13 +202,13 @@
 }
 
 .prebuilt-tag-button:hover {
-    background: #000000;
-    color: #ffffff;
+    background: var(--journal-button-bg);
+    color: var(--journal-button-text);
 }
 
 .prebuilt-tag-button.selected {
-    background: #000000;
-    color: #ffffff;
+    background: var(--journal-button-bg);
+    color: var(--journal-button-text);
 }
 
 /* Tag Chips Display */
@@ -192,9 +217,9 @@
     flex-wrap: wrap;
     gap: 8px;
     padding: 12px;
-    border: 2px solid #000000;
+    border: 2px solid var(--journal-border);
     border-radius: 6px;
-    background: #f5f5f5;
+    background: var(--journal-bg-secondary);
     min-height: 60px;
 }
 
@@ -206,18 +231,18 @@
     border-radius: 16px;
     font-size: 0.875rem;
     position: relative;
-    border: 2px solid #000000;
+    border: 2px solid var(--journal-border);
     font-weight: 600;
 }
 
 .tag-chip.custom-tag {
-    background: #ffffff;
-    color: #000000;
+    background: var(--journal-bg-primary);
+    color: var(--journal-text-primary);
 }
 
 .tag-chip.prebuilt-tag {
-    background: #000000;
-    color: #ffffff;
+    background: var(--journal-button-bg);
+    color: var(--journal-button-text);
 }
 
 .tag-type-indicator {
@@ -243,18 +268,17 @@
     opacity: 0.7;
 }
 
-/* Black and White Buttons */
+/* Theme-Aware Buttons */
 .bw-button {
-    background-color: #000000 !important;
-    color: #ffffff !important;
-    border: 2px solid #000000 !important;
+    background-color: var(--journal-button-bg) !important;
+    color: var(--journal-button-text) !important;
+    border: 2px solid var(--journal-border) !important;
     font-weight: 700 !important;
     text-transform: none !important;
 }
 
 .bw-button:hover:not(:disabled) {
-    background-color: #333333 !important;
-    border-color: #333333 !important;
+    opacity: 0.85 !important;
 }
 
 .bw-button:disabled {
@@ -263,45 +287,45 @@
 }
 
 .bw-button ::deep .mud-button-label {
-    color: #ffffff !important;
+    color: var(--journal-button-text) !important;
 }
 
 .bw-button-outline {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border: 2px solid #000000 !important;
+    background-color: var(--journal-bg-primary) !important;
+    color: var(--journal-text-primary) !important;
+    border: 2px solid var(--journal-border) !important;
     font-weight: 700 !important;
     text-transform: none !important;
 }
 
 .bw-button-outline:hover {
-    background-color: #f5f5f5 !important;
+    opacity: 0.85 !important;
 }
 
 .bw-button-outline ::deep .mud-button-label {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
 }
 
 /* Alerts */
 .bw-alert-error {
-    background-color: #ffffff !important;
-    border: 2px solid #000000 !important;
-    color: #000000 !important;
+    background-color: var(--journal-bg-primary) !important;
+    border: 2px solid var(--journal-border) !important;
+    color: var(--journal-text-primary) !important;
 }
 
 .bw-alert-error ::deep .mud-alert-message {
-    color: #000000 !important;
+    color: var(--journal-text-primary) !important;
     font-weight: 600 !important;
 }
 
 .bw-alert-success {
-    background-color: #000000 !important;
-    border: 2px solid #000000 !important;
-    color: #ffffff !important;
+    background-color: var(--journal-button-bg) !important;
+    border: 2px solid var(--journal-border) !important;
+    color: var(--journal-button-text) !important;
 }
 
 .bw-alert-success ::deep .mud-alert-message {
-    color: #ffffff !important;
+    color: var(--journal-button-text) !important;
     font-weight: 600 !important;
 }
 
