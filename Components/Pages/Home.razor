@@ -1,5 +1,338 @@
-﻿@page "/"
+@page "/home"
+@using JournalPersonalApp.Data.Abstractions
+@using JournalPersonalApp.Data.Models
+@using ApexCharts
+@inject IAnalyticsService AnalyticsService
+@inject IJournalEntryService JournalService
 
-<h1>Hello, world!</h1>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="dash-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <MudText Typo="Typo.h4" Class="header-title">Dashboard</MudText>
+        <MudText Typo="Typo.body1" Class="header-subtitle">
+            Your journal insights and analytics
+        </MudText>
+    </div>
 
-Welcome to your new app.
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <MudProgressCircular Indeterminate="true" Size="MudBlazor.Size.Large" />
+            <MudText Typo="Typo.body1" Class="mt-3">Loading your dashboard...</MudText>
+        </div>
+    }
+    else
+    {
+        <!-- Stats Cards Row -->
+        <MudGrid Spacing="3" Class="mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="2" Class="stat-card">
+                    <div class="stat-icon-wrapper stat-icon-primary">
+                        <MudIcon Icon="@Icons.Material.Filled.AutoStories" Size="MudBlazor.Size.Large" />
+                    </div>
+                    <div class="stat-content">
+                        <MudText Typo="Typo.h4" Class="stat-value">@totalEntries</MudText>
+                        <MudText Typo="Typo.body2" Class="stat-label">Total Entries</MudText>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="2" Class="stat-card">
+                    <div class="stat-icon-wrapper stat-icon-success">
+                        <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Size="MudBlazor.Size.Large" />
+                    </div>
+                    <div class="stat-content">
+                        <MudText Typo="Typo.h4" Class="stat-value">@currentStreak</MudText>
+                        <MudText Typo="Typo.body2" Class="stat-label">Current Streak</MudText>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="2" Class="stat-card">
+                    <div class="stat-icon-wrapper stat-icon-warning">
+                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="MudBlazor.Size.Large" />
+                    </div>
+                    <div class="stat-content">
+                        <MudText Typo="Typo.h4" Class="stat-value">@longestStreak</MudText>
+                        <MudText Typo="Typo.body2" Class="stat-label">Longest Streak</MudText>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="2" Class="stat-card">
+                    <div class="stat-icon-wrapper stat-icon-info">
+                        <MudIcon Icon="@Icons.Material.Filled.Article" Size="MudBlazor.Size.Large" />
+                    </div>
+                    <div class="stat-content">
+                        <MudText Typo="Typo.h4" Class="stat-value">@avgWordCount</MudText>
+                        <MudText Typo="Typo.body2" Class="stat-label">Avg Words/Entry</MudText>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Charts Row -->
+        <MudGrid Spacing="3">
+            <!-- Mood Distribution Pie Chart -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="chart-card">
+                    <div class="chart-header">
+                        <MudIcon Icon="@Icons.Material.Filled.PieChart" Class="chart-icon" />
+                        <MudText Typo="Typo.h6" Class="chart-title">Mood Distribution</MudText>
+                    </div>
+                    <div class="chart-container">
+                        @if (moodData.Any())
+                        {
+                            <ApexChart TItem="MoodData"
+                                       Title="Your Emotional Journey"
+                                       Options="pieChartOptions">
+                                <ApexPointSeries TItem="MoodData"
+                                                 Items="moodData"
+                                                 Name="Entries"
+                                                 SeriesType="SeriesType.Pie"
+                                                 XValue="@(e => e.Mood)"
+                                                 YValue="@(e => (decimal)e.Count)" />
+                            </ApexChart>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Class="text-center pa-4" Style="color: var(--dash-text-secondary);">No mood data available</MudText>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Top Tags Vertical Bar Chart -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="chart-card">
+                    <div class="chart-header">
+                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="chart-icon" />
+                        <MudText Typo="Typo.h6" Class="chart-title">Top Tags</MudText>
+                    </div>
+                    <div class="chart-container">
+                        @if (tagData.Any())
+                        {
+                            <ApexChart TItem="TagData"
+                                       Title="Most Used Tags"
+                                       Options="barChartOptions">
+                                <ApexPointSeries TItem="TagData"
+                                                 Items="tagData"
+                                                 Name="Usage Count"
+                                                 SeriesType="SeriesType.Bar"
+                                                 XValue="@(e => e.Tag)"
+                                                 YValue="@(e => (decimal)e.Count)"
+                                                 OrderBy="e => e.Y" />
+                            </ApexChart>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Class="text-center pa-4" Style="color: var(--dash-text-secondary);">No tag data available</MudText>
+                        }
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Recent Entries -->
+            <MudItem xs="12">
+                <MudPaper Elevation="2" Class="recent-entries-card">
+                    <div class="chart-header">
+                        <MudIcon Icon="@Icons.Material.Filled.History" Class="chart-icon" />
+                        <MudText Typo="Typo.h6" Class="chart-title">Recent Entries</MudText>
+                    </div>
+                    <MudDivider Class="mb-3" />
+                    @if (recentEntries.Any())
+                    {
+                        <div class="recent-entries-list">
+                            @foreach (var entry in recentEntries.Take(5))
+                            {
+                                <div class="recent-entry-item">
+                                    <div class="entry-date">
+                                        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="MudBlazor.Size.Small" />
+                                        <MudText Typo="Typo.caption">@entry.EntryDate.ToString("MMM dd, yyyy")</MudText>
+                                    </div>
+                                    <MudText Typo="Typo.subtitle1" Class="entry-title">@entry.Title</MudText>
+                                    <MudChip T="string" Size="MudBlazor.Size.Small" Class="mood-chip">@GetMoodCategory(entry.PrimaryMood)</MudChip>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="text-center pa-4">No entries yet. Start journaling to see your recent entries here!</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Refresh Button -->
+        <div class="refresh-container">
+            <MudButton Variant="Variant.Filled" 
+                       StartIcon="@Icons.Material.Filled.Refresh" 
+                       OnClick="LoadDataAsync"
+                       Class="refresh-button">
+                Refresh Dashboard
+            </MudButton>
+        </div>
+    }
+</MudContainer>
+
+@code {
+    private bool isLoading = true;
+    private int currentStreak;
+    private int longestStreak;
+    private int totalEntries;
+    private int avgWordCount;
+
+    private List<MoodData> moodData = new();
+    private List<TagData> tagData = new();
+    private List<Journalentry> recentEntries = new();
+
+    private ApexChartOptions<MoodData> pieChartOptions = new();
+    private ApexChartOptions<TagData> barChartOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ConfigureCharts();
+        await LoadDataAsync();
+    }
+
+    private void ConfigureCharts()
+    {
+        // Regular Pie Chart Configuration
+        pieChartOptions = new ApexChartOptions<MoodData>
+        {
+            Theme = new Theme { Mode = Mode.Light },
+            Chart = new Chart
+            {
+                Toolbar = new Toolbar { Show = false },
+                Height = 350,
+                Background = "transparent"
+            },
+            Colors = new List<string> { "#4caf50", "#ffc107", "#f44336" },
+            Legend = new Legend
+            {
+                Position = LegendPosition.Bottom,
+                FontSize = "14px"
+            },
+            DataLabels = new DataLabels
+            {
+                Enabled = true
+            }
+        };
+
+        // Vertical Bar Chart Configuration
+        barChartOptions = new ApexChartOptions<TagData>
+        {
+            Theme = new Theme { Mode = Mode.Light },
+            Chart = new Chart
+            {
+                Toolbar = new Toolbar { Show = false },
+                Height = 350,
+                Background = "transparent"
+            },
+            Colors = new List<string> { "#2196f3" },
+            PlotOptions = new PlotOptions
+            {
+                Bar = new PlotOptionsBar
+                {
+                    Horizontal = false,
+                    ColumnWidth = "60%"
+                }
+            },
+            DataLabels = new DataLabels
+            {
+                Enabled = true,
+                Style = new DataLabelsStyle
+                {
+                    FontSize = "12px"
+                }
+            },
+            Xaxis = new XAxis
+            {
+                Title = new AxisTitle { Text = "Tags" }
+            },
+            Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Title = new AxisTitle { Text = "Count" }
+                }
+            }
+        };
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var endDate = DateTime.UtcNow;
+            var startDate = endDate.AddDays(-30);
+
+            // Load stats
+            currentStreak = await AnalyticsService.GetCurrentStreakAsync();
+            longestStreak = await AnalyticsService.GetLongestStreakAsync();
+            totalEntries = await AnalyticsService.GetTotalEntriesAsync(startDate, endDate);
+            var avgWords = await AnalyticsService.GetAverageWordCountAsync(startDate, endDate);
+            avgWordCount = (int)Math.Round(avgWords);
+
+            // Load mood distribution
+            var moodDist = await AnalyticsService.GetMoodDistributionAsync(startDate, endDate);
+            moodData = moodDist.Select(m => new MoodData
+            {
+                Mood = m.Key,
+                Count = m.Value
+            }).Where(m => m.Count > 0).ToList();
+
+            // Load top tags
+            var topTags = await AnalyticsService.GetMostUsedTagsAsync(startDate, endDate, 8);
+            tagData = topTags.Select(t => new TagData
+            {
+                Tag = t.Key,
+                Count = t.Value
+            }).ToList();
+
+            // Load recent entries
+            recentEntries = await JournalService.GetAllAsync();
+            recentEntries = recentEntries.OrderByDescending(e => e.EntryDate).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetMoodCategory(MoodCategory mood)
+    {
+        return mood switch
+        {
+            MoodCategory.Happy or MoodCategory.Excited or MoodCategory.Relaxed
+                or MoodCategory.Grateful or MoodCategory.Confident => "Positive",
+            MoodCategory.Sad or MoodCategory.Angry or MoodCategory.Stressed
+                or MoodCategory.Lonely or MoodCategory.Anxious => "Negative",
+            _ => "Neutral"
+        };
+    }
+
+    private class MoodData
+    {
+        public string Mood { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+
+    private class TagData
+    {
+        public string Tag { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+}
