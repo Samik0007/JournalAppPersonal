@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="JournalPersonalApp.csproj" />
+  <Project Path="JournalPersonalApp.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
 </Solution>
