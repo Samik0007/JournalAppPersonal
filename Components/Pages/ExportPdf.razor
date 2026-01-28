@@ -1,0 +1,240 @@
+﻿@page "/export-pdf"
+@using JournalPersonalApp.Data.Models
+@using JournalPersonalApp.Data.Abstractions
+@inject IJournalEntryService JournalService
+@inject IPdfExportService PdfExportService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="export-container">
+    <div class="page-header">
+        <MudText Typo="Typo.h4" Class="header-title">Export Journal Entries</MudText>
+        <MudText Typo="Typo.body1" Class="header-subtitle">
+            Select journal entries to export as PDF documents
+        </MudText>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudPaper Elevation="0" Class="loading-container">
+            <MudProgressCircular Color="MudBlazor.Color.Dark" Size="MudBlazor.Size.Large" Indeterminate="true" />
+            <MudText Typo="Typo.body1" Class="mt-4">Loading entries...</MudText>
+        </MudPaper>
+    }
+    else if (entries == null || !entries.Any())
+    {
+        <MudPaper Elevation="2" Class="empty-state">
+            <div class="empty-icon">📄</div>
+            <MudText Typo="Typo.h6" Class="mb-2">No journal entries found</MudText>
+            <MudText Typo="Typo.body2" Color="MudBlazor.Color.Secondary">
+                Start writing journal entries to export them as PDF
+            </MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <div class="entries-grid">
+            @foreach (var entry in entries)
+            {
+                <MudCard Elevation="2" Class="export-card">
+                    <MudCardHeader Class="card-header-custom">
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Class="entry-title">@entry.Title</MudText>
+                            <div class="header-meta">
+                                <MudText Typo="Typo.body2" Class="entry-date">
+                                    @entry.EntryDate.ToString("MMMM dd, yyyy")
+                                </MudText>
+                                <MudChip T="string" 
+                                         Size="MudBlazor.Size.Small" 
+                                         Class="@GetMoodClass(entry.PrimaryMood)"
+                                         Variant="Variant.Filled">
+                                    @GetMoodDisplayName(entry.PrimaryMood)
+                                </MudChip>
+                            </div>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+
+                    <MudCardContent Class="card-content-custom">
+                        <MudText Typo="Typo.body2" Class="entry-preview">
+                            @((MarkupString)GetPreviewText(entry.Description))
+                        </MudText>
+
+                        @if (entry.JournalEntryTags != null && entry.JournalEntryTags.Any())
+                        {
+                            <div class="tags-container">
+                                @foreach (var tag in entry.JournalEntryTags.Take(5))
+                                {
+                                    <MudChip T="string" 
+                                             Size="MudBlazor.Size.Small" 
+                                             Variant="Variant.Outlined"
+                                             Class="tag-chip">
+                                        @tag.Tag?.Name
+                                    </MudChip>
+                                }
+                                @if (entry.JournalEntryTags.Count > 5)
+                                {
+                                    <MudChip T="string" 
+                                             Size="MudBlazor.Size.Small" 
+                                             Variant="Variant.Filled"
+                                             Class="tag-chip-more">
+                                        +@(entry.JournalEntryTags.Count - 5)
+                                    </MudChip>
+                                }
+                            </div>
+                        }
+                    </MudCardContent>
+
+                    <MudCardActions Class="card-actions-custom">
+                        <MudButton Variant="Variant.Filled"
+                                   Class="btn-export"
+                                   StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                                   OnClick="@(() => ExportEntry(entry.Id))"
+                                   Disabled="@(exportingIds.Contains(entry.Id))">
+                            @if (exportingIds.Contains(entry.Id))
+                            {
+                                <MudProgressCircular Size="MudBlazor.Size.Small" Indeterminate="true" Class="mr-2" />
+                                <span>Exporting...</span>
+                            }
+                            else
+                            {
+                                <span>Export PDF</span>
+                            }
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            }
+        </div>
+
+        @if (entries.Count > 1)
+        {
+            <MudPaper Elevation="0" Class="bulk-export-section">
+                <MudButton Variant="Variant.Filled"
+                           Class="btn-export-all"
+                           Size="MudBlazor.Size.Large"
+                           StartIcon="@Icons.Material.Filled.FileDownload"
+                           OnClick="ExportAllEntries"
+                           Disabled="isExportingAll">
+                    @if (isExportingAll)
+                    {
+                        <MudProgressCircular Size="MudBlazor.Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Exporting All (@entries.Count entries)...</span>
+                    }
+                    else
+                    {
+                        <span>Export All Entries (@entries.Count)</span>
+                    }
+                </MudButton>
+            </MudPaper>
+        }
+    }
+</MudContainer>
+
+@code {
+    private List<Journalentry>? entries;
+    private bool isLoading = true;
+    private HashSet<Guid> exportingIds = new();
+    private bool isExportingAll = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntries();
+    }
+
+    private async Task LoadEntries()
+    {
+        isLoading = true;
+        try
+        {
+            entries = await JournalService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading entries: {ex.Message}", Severity.Error);
+            entries = new List<Journalentry>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ExportEntry(Guid entryId)
+    {
+        exportingIds.Add(entryId);
+        try
+        {
+            var entry = await JournalService.GetByIdAsync(entryId);
+            if (entry != null)
+            {
+                var path = await PdfExportService.ExportJournalEntryAsync(entry);
+                Snackbar.Add($"Entry '{entry.Title}' exported successfully to Downloads folder!", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to export entry: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            exportingIds.Remove(entryId);
+        }
+    }
+
+    private async Task ExportAllEntries()
+    {
+        isExportingAll = true;
+        try
+        {
+            if (entries != null && entries.Any())
+            {
+                var path = await PdfExportService.ExportAllJournalEntriesAsync(entries);
+                Snackbar.Add($"All {entries.Count} entries exported successfully to Downloads folder!", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to export all entries: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isExportingAll = false;
+        }
+    }
+
+    private string GetPreviewText(string htmlContent)
+    {
+        if (string.IsNullOrEmpty(htmlContent))
+            return "<em style='color: #999;'>No content</em>";
+
+        // Strip HTML tags
+        var plainText = System.Text.RegularExpressions.Regex.Replace(htmlContent, "<.*?>", string.Empty);
+
+        if (plainText.Length <= 180)
+            return plainText;
+
+        return plainText.Substring(0, 180) + "...";
+    }
+
+    private string GetMoodDisplayName(MoodCategory mood)
+    {
+        return mood switch
+        {
+            MoodCategory.Happy or MoodCategory.Excited or MoodCategory.Relaxed
+                or MoodCategory.Grateful or MoodCategory.Confident => "Positive",
+            MoodCategory.Sad or MoodCategory.Angry or MoodCategory.Stressed
+                or MoodCategory.Lonely or MoodCategory.Anxious => "Negative",
+            _ => "Neutral"
+        };
+    }
+
+    private string GetMoodClass(MoodCategory mood)
+    {
+        return mood switch
+        {
+            MoodCategory.Happy or MoodCategory.Excited or MoodCategory.Relaxed
+                or MoodCategory.Grateful or MoodCategory.Confident => "mood-chip-positive",
+            MoodCategory.Sad or MoodCategory.Angry or MoodCategory.Stressed
+                or MoodCategory.Lonely or MoodCategory.Anxious => "mood-chip-negative",
+            _ => "mood-chip-neutral"
+        };
+    }
+}

@@ -1,0 +1,394 @@
+/* Container */
+.export-container {
+    padding: 24px;
+    background: #fafafa;
+    min-height: 100vh;
+}
+
+/* Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 3px solid #000000;
+}
+
+.header-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #000000;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.header-subtitle {
+    color: #666666;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Loading Container */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    background: #ffffff;
+    border: 2px dashed #d0d0d0;
+    border-radius: 12px;
+    text-align: center;
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 40px;
+    background: #ffffff;
+    border: 2px dashed #d0d0d0;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 5rem;
+    margin-bottom: 20px;
+    opacity: 0.6;
+}
+
+/* Entries Grid */
+.entries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+/* Export Card */
+.export-card {
+    background: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.export-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: #000000;
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.export-card:hover {
+    border-color: #000000;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px);
+}
+
+.export-card:hover::before {
+    transform: scaleY(1);
+}
+
+/* Card Header Custom */
+.card-header-custom {
+    background: #f5f5f5;
+    border-bottom: 2px solid #e0e0e0;
+    padding: 20px;
+}
+
+.entry-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+}
+
+.header-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.entry-date {
+    font-size: 0.9rem;
+    color: #666666;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+/* Mood Chips */
+::deep .mood-chip-positive {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #000000 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    padding: 8px 16px !important;
+}
+
+::deep .mood-chip-negative {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    padding: 8px 16px !important;
+}
+
+::deep .mood-chip-neutral {
+    background-color: #f5f5f5 !important;
+    color: #666666 !important;
+    border: 2px solid #999999 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    padding: 8px 16px !important;
+}
+
+/* Card Content Custom */
+.card-content-custom {
+    padding: 20px;
+    background: #fafafa;
+}
+
+.entry-preview {
+    color: #333333;
+    line-height: 1.7;
+    max-height: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    font-size: 0.95rem;
+}
+
+/* Tags Container */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid #e0e0e0;
+}
+
+::deep .tag-chip {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    font-size: 0.75rem !important;
+    transition: all 0.2s ease !important;
+}
+
+::deep .tag-chip:hover {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    transform: scale(1.05);
+}
+
+::deep .tag-chip-more {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #000000 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    font-size: 0.75rem !important;
+}
+
+/* Card Actions Custom */
+.card-actions-custom {
+    padding: 16px 20px;
+    background: #ffffff;
+    border-top: 2px solid #e0e0e0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+::deep .btn-export {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 12px 28px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+::deep .btn-export:hover:not(:disabled) {
+    background-color: #333333 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+::deep .btn-export:disabled {
+    background-color: #666666 !important;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Bulk Export Section */
+.bulk-export-section {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+    background: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    margin-top: 32px;
+}
+
+::deep .btn-export-all {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 16px 40px !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+    font-size: 1.1rem !important;
+}
+
+::deep .btn-export-all:hover:not(:disabled) {
+    background-color: #333333 !important;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+::deep .btn-export-all:disabled {
+    background-color: #666666 !important;
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .export-container {
+        padding: 16px;
+    }
+
+    .header-title {
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+    }
+
+    .header-subtitle {
+        font-size: 1rem;
+    }
+
+    .entries-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .export-card {
+        margin-bottom: 0;
+    }
+
+    .card-header-custom,
+    .card-content-custom,
+    .card-actions-custom {
+        padding: 16px;
+    }
+
+    .entry-title {
+        font-size: 1.15rem;
+    }
+
+    .header-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    ::deep .btn-export-all {
+        width: 100%;
+        padding: 14px 24px !important;
+        font-size: 1rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+    }
+
+    .header-title {
+        font-size: 1.5rem;
+    }
+
+    .empty-state,
+    .loading-container {
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+    }
+
+    .entry-preview {
+        font-size: 0.85rem;
+        max-height: 80px;
+        -webkit-line-clamp: 2;
+    }
+
+    ::deep .btn-export {
+        width: 100%;
+        padding: 10px 20px !important;
+        font-size: 0.85rem !important;
+    }
+
+    .bulk-export-section {
+        padding: 20px;
+    }
+}
+
+/* Animation for Progress Circular */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Smooth Transitions */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
