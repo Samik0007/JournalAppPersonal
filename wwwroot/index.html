@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="auth.css" />
-    <link rel="stylesheet" href="lib/quill/quill.snow.css" />
+    <link href="lib/quill/quill.snow.css" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="JournalPersonalApp.styles.css" />
     <link rel="icon" href="data:,">
@@ -26,10 +26,14 @@
         <span class="dismiss">🗙</span>
     </div>
 
-    <script src="_framework/blazor.webview.js" autostart="false"></script>
-    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <!-- Quill must load before journal-quill.js -->
     <script src="lib/quill/quill.js"></script>
     <script src="journal-quill.js"></script>
+    <script src="theme-helper.js"></script>
+    
+    <!-- Blazor and other libraries -->
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="_content/Blazor-ApexCharts/js/blazor-apex-charts.js"></script>
 
 </body>

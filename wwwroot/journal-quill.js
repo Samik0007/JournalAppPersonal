@@ -16,18 +16,33 @@ window.journalQuill = (function () {
      */
     function init(editorId, initialContent) {
         try {
-            // Check if editor already exists
+            console.log(`[Quill] Initializing editor: ${editorId}`);
+            
+            // Check if Quill library is loaded
+            if (typeof Quill === 'undefined') {
+                console.error('[Quill] Quill library is not loaded!');
+                return false;
+            }
+
+            // Check if editor already exists - reuse it instead of creating new one
             if (editors.has(editorId)) {
-                console.warn(`Editor "${editorId}" already initialized`);
+                console.warn(`[Quill] Editor "${editorId}" already initialized, reusing existing instance`);
+                const quill = editors.get(editorId);
+                if (initialContent && initialContent.trim() !== '' && initialContent !== '<p><br></p>') {
+                    quill.root.innerHTML = initialContent;
+                }
                 return true;
             }
 
             // Verify container exists
             const container = document.getElementById(editorId);
             if (!container) {
-                console.error(`Editor container not found: ${editorId}`);
+                console.error(`[Quill] Editor container not found: ${editorId}`);
                 return false;
             }
+
+            // Clear any existing content in the container
+            container.innerHTML = '';
 
             // Create Quill editor instance
             const quill = new Quill(`#${editorId}`, {
@@ -69,8 +84,11 @@ window.journalQuill = (function () {
             });
 
             // Set initial content if provided
-            if (initialContent && initialContent.trim() !== '') {
+            if (initialContent && initialContent.trim() !== '' && initialContent !== '<p><br></p>') {
+                console.log(`[Quill] Setting initial content for ${editorId}, length: ${initialContent.length}`);
                 quill.root.innerHTML = initialContent;
+            } else {
+                console.log(`[Quill] No initial content for ${editorId}`);
             }
 
             // Add text change listener for auto-save functionality (optional)
@@ -91,11 +109,11 @@ window.journalQuill = (function () {
             // Store the editor instance
             editors.set(editorId, quill);
 
-            console.log(`Quill editor "${editorId}" initialized successfully`);
+            console.log(`[Quill] Editor "${editorId}" initialized successfully`);
             return true;
 
         } catch (error) {
-            console.error(`Failed to initialize editor "${editorId}":`, error);
+            console.error(`[Quill] Failed to initialize editor "${editorId}":`, error);
             return false;
         }
     }
@@ -109,12 +127,14 @@ window.journalQuill = (function () {
         try {
             const quill = editors.get(editorId);
             if (!quill) {
-                console.error(`Editor not found: ${editorId}`);
+                console.error(`[Quill] Editor not found: ${editorId}`);
                 return '';
             }
-            return quill.root.innerHTML;
+            const html = quill.root.innerHTML;
+            console.log(`[Quill] Retrieved HTML from ${editorId}, length: ${html.length}`);
+            return html;
         } catch (error) {
-            console.error(`Failed to get HTML from "${editorId}":`, error);
+            console.error(`[Quill] Failed to get HTML from "${editorId}":`, error);
             return '';
         }
     }
@@ -128,12 +148,12 @@ window.journalQuill = (function () {
         try {
             const quill = editors.get(editorId);
             if (!quill) {
-                console.error(`Editor not found: ${editorId}`);
+                console.error(`[Quill] Editor not found: ${editorId}`);
                 return '';
             }
             return quill.getText();
         } catch (error) {
-            console.error(`Failed to get text from "${editorId}":`, error);
+            console.error(`[Quill] Failed to get text from "${editorId}":`, error);
             return '';
         }
     }
@@ -148,13 +168,23 @@ window.journalQuill = (function () {
         try {
             const quill = editors.get(editorId);
             if (!quill) {
-                console.error(`Editor not found: ${editorId}`);
+                console.error(`[Quill] Editor not found: ${editorId}`);
                 return false;
             }
-            quill.root.innerHTML = html || '';
+            
+            const content = html || '';
+            console.log(`[Quill] Setting HTML in ${editorId}, length: ${content.length}`);
+            
+            // Clear first then set content to ensure proper rendering
+            if (content === '' || content === '<p><br></p>') {
+                quill.setText('');
+            } else {
+                quill.root.innerHTML = content;
+            }
+            
             return true;
         } catch (error) {
-            console.error(`Failed to set HTML in "${editorId}":`, error);
+            console.error(`[Quill] Failed to set HTML in "${editorId}":`, error);
             return false;
         }
     }
@@ -168,13 +198,14 @@ window.journalQuill = (function () {
         try {
             const quill = editors.get(editorId);
             if (!quill) {
-                console.error(`Editor not found: ${editorId}`);
+                console.error(`[Quill] Editor not found: ${editorId}`);
                 return false;
             }
             quill.setText('');
+            console.log(`[Quill] Cleared ${editorId}`);
             return true;
         } catch (error) {
-            console.error(`Failed to clear "${editorId}":`, error);
+            console.error(`[Quill] Failed to clear "${editorId}":`, error);
             return false;
         }
     }
@@ -188,12 +219,12 @@ window.journalQuill = (function () {
         try {
             const quill = editors.get(editorId);
             if (!quill) {
-                console.error(`Editor not found: ${editorId}`);
+                console.error(`[Quill] Editor not found: ${editorId}`);
                 return 0;
             }
             return quill.getLength() - 1; // Subtract 1 for the trailing newline
         } catch (error) {
-            console.error(`Failed to get length from "${editorId}":`, error);
+            console.error(`[Quill] Failed to get length from "${editorId}":`, error);
             return 0;
         }
     }
@@ -208,13 +239,14 @@ window.journalQuill = (function () {
         try {
             const quill = editors.get(editorId);
             if (!quill) {
-                console.error(`Editor not found: ${editorId}`);
+                console.error(`[Quill] Editor not found: ${editorId}`);
                 return false;
             }
             quill.enable(enabled);
+            console.log(`[Quill] Set ${editorId} enabled: ${enabled}`);
             return true;
         } catch (error) {
-            console.error(`Failed to set enabled state for "${editorId}":`, error);
+            console.error(`[Quill] Failed to set enabled state for "${editorId}":`, error);
             return false;
         }
     }
@@ -228,13 +260,13 @@ window.journalQuill = (function () {
         try {
             const quill = editors.get(editorId);
             if (!quill) {
-                console.error(`Editor not found: ${editorId}`);
+                console.error(`[Quill] Editor not found: ${editorId}`);
                 return false;
             }
             quill.focus();
             return true;
         } catch (error) {
-            console.error(`Failed to focus "${editorId}":`, error);
+            console.error(`[Quill] Failed to focus "${editorId}":`, error);
             return false;
         }
     }
@@ -248,13 +280,13 @@ window.journalQuill = (function () {
         try {
             const quill = editors.get(editorId);
             if (!quill) {
-                console.error(`Editor not found: ${editorId}`);
+                console.error(`[Quill] Editor not found: ${editorId}`);
                 return true;
             }
             const text = quill.getText().trim();
             return text.length === 0;
         } catch (error) {
-            console.error(`Failed to check if "${editorId}" is empty:`, error);
+            console.error(`[Quill] Failed to check if "${editorId}" is empty:`, error);
             return true;
         }
     }
@@ -268,21 +300,27 @@ window.journalQuill = (function () {
         try {
             const quill = editors.get(editorId);
             if (!quill) {
-                console.warn(`Editor not found: ${editorId}`);
+                console.warn(`[Quill] Editor not found: ${editorId}`);
                 return false;
             }
 
             // Remove event listeners
             quill.off('text-change');
 
+            // Clear the container but don't remove it
+            const container = document.getElementById(editorId);
+            if (container) {
+                container.innerHTML = '';
+            }
+
             // Remove from map
             editors.delete(editorId);
 
-            console.log(`Editor "${editorId}" disposed successfully`);
+            console.log(`[Quill] Editor "${editorId}" disposed successfully`);
             return true;
 
         } catch (error) {
-            console.error(`Failed to dispose editor "${editorId}":`, error);
+            console.error(`[Quill] Failed to dispose editor "${editorId}":`, error);
             return false;
         }
     }
@@ -292,7 +330,9 @@ window.journalQuill = (function () {
      * @returns {Array<string>} - Array of editor IDs
      */
     function getActiveEditors() {
-        return Array.from(editors.keys());
+        const editorIds = Array.from(editors.keys());
+        console.log(`[Quill] Active editors: ${editorIds.join(', ')}`);
+        return editorIds;
     }
 
     /**
@@ -303,10 +343,10 @@ window.journalQuill = (function () {
         try {
             const editorIds = Array.from(editors.keys());
             editorIds.forEach(id => dispose(id));
-            console.log('All editors disposed');
+            console.log('[Quill] All editors disposed');
             return true;
         } catch (error) {
-            console.error('Failed to dispose all editors:', error);
+            console.error('[Quill] Failed to dispose all editors:', error);
             return false;
         }
     }
@@ -328,9 +368,5 @@ window.journalQuill = (function () {
     };
 })();
 
-// Cleanup on page unload
-window.addEventListener('beforeunload', function () {
-    if (window.journalQuill) {
-        window.journalQuill.disposeAll();
-    }
-});
+// Log when script is loaded
+console.log('[Quill] journal-quill.js loaded successfully');
