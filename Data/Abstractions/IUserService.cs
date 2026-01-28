@@ -17,4 +17,6 @@ public interface IUserService
     Task<bool> VerifyPinAsync(string pin);
 
     Task ChangePinAsync(string currentPin, string newPin);
+
+    Task LogoutAsync();
 }

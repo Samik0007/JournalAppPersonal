@@ -1,30 +1,4 @@
-:root {
-    --nw-bg: #000000;            /* sidebar background - solid black */
-    --nw-panel: #000000;         /* nav menu surface - solid black */
-    --nw-text: #ffffff;          /* default item text - WHITE */
-    --nw-muted: #ffffff;         /* also white, not muted */
-    --nw-border: rgba(255,255,255,.20);
-    --nw-hover: rgba(255,255,255,.12);
-    
-    --nw-active: #ffffff;        /* active background - white pill */
-    --nw-active-text: #000000;   /* active text - black */
-
-    --nw-shadow: 0 20px 50px rgba(0,0,0,.45);
-}
-
-@media (prefers-color-scheme: light) {
-    :root {
-        --nw-bg: #000000;
-        --nw-panel: #000000;
-        --nw-text: #ffffff;
-        --nw-muted: #ffffff;
-        --nw-border: rgba(255,255,255,.20);
-        --nw-hover: rgba(255,255,255,.12);
-        --nw-active: #ffffff;
-        --nw-active-text: #000000;
-        --nw-shadow: 0 20px 50px rgba(0,0,0,.12);
-    }
-}
+/* NavMenu ALWAYS has black background with white text - no theme variations */
 
 .navbar-toggler {
     appearance: none;
@@ -51,8 +25,8 @@
 
 .top-row {
     min-height: 3.5rem;
-    background: var(--nw-bg);
-    border-bottom: 1px solid var(--nw-border);
+    background: #000000;
+    border-bottom: 1px solid rgba(255,255,255,.20);
 }
 
 .navbar-brand {
@@ -73,7 +47,7 @@
     opacity: 1;
 }
 
-/* All icons with white fill for default state */
+/* All icons with white fill - ensures they stay white in all modes */
 .bi-house-door-fill-nav-menu {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-house-door-fill' viewBox='0 0 16 16'%3E%3Cpath d='M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5Z'/%3E%3C/svg%3E");
 }
@@ -102,10 +76,15 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z'/%3E%3Cpath d='M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z'/%3E%3C/svg%3E");
 }
 
+.bi-logout-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z'/%3E%3Cpath fill-rule='evenodd' d='M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z'/%3E%3C/svg%3E");
+}
+
 .nav-scrollable {
     display: none;
-    background: var(--nw-bg);
-    box-shadow: var(--nw-shadow);
+    background: #000000;
+    box-shadow: 0 20px 50px rgba(0,0,0,.45);
+    position: relative;
 }
 
 .navbar-toggler:checked ~ .nav-scrollable {
@@ -118,10 +97,11 @@
     }
 
     .nav-scrollable {
-        display: block;
+        display: flex;
+        flex-direction: column;
         height: calc(100vh - 3.5rem);
         overflow-y: auto;
-        border-right: 1px solid var(--nw-border);
+        border-right: 1px solid rgba(255,255,255,.20);
     }
 
     .nav-scrollable::-webkit-scrollbar {
@@ -156,7 +136,7 @@
     padding-bottom: 1rem;
 }
 
-/* Default nav items: transparent background with BRIGHT WHITE text */
+/* CRITICAL: Force white text color in ALL cases - override any theme */
 .nav-item ::deep .nav-link {
     color: #ffffff !important;
     background: transparent;
@@ -167,27 +147,88 @@
     align-items: center;
     line-height: 3rem;
     padding: 0 1rem;
-    transition: background-color .2s ease, color .2s ease;
+    transition: background-color .2s ease;
 }
 
 .nav-item ::deep .nav-link .bi {
     opacity: 1;
 }
 
-/* Hover: subtle white overlay with BRIGHT WHITE text */
+/* Hover: keep WHITE text with subtle white overlay */
 .nav-item ::deep .nav-link:hover {
-    background-color: var(--nw-hover);
+    background-color: rgba(255,255,255,.12);
     color: #ffffff !important;
 }
 
 /* Active: WHITE background with BLACK text */
 .nav-item ::deep a.active {
-    background-color: var(--nw-active);
-    color: var(--nw-active-text) !important;
+    background-color: #ffffff;
+    color: #000000 !important;
 }
 
 /* Invert icons to black when active */
 .nav-item ::deep a.active .bi {
     filter: invert(1);
     opacity: 1;
+}
+
+/* OVERRIDE any global theme styles that might affect nav links */
+.nav-item a,
+.nav-item a:link,
+.nav-item a:visited,
+.nav-item a:hover,
+.nav-item a:active {
+    color: #ffffff !important;
+}
+
+.nav-item a.active,
+.nav-item a.active:link,
+.nav-item a.active:visited,
+.nav-item a.active:hover,
+.nav-item a.active:active {
+    color: #000000 !important;
+}
+
+/* Logout Container - Sticky at bottom */
+.logout-container {
+    margin-top: auto;
+    padding: 1rem;
+    padding-top: 1.5rem;
+}
+
+.logout-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    margin-bottom: 1rem;
+}
+
+.logout-button {
+    width: 100%;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    color: #ffffff;
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+}
+
+.logout-button:hover {
+    background: rgba(220, 53, 69, 0.15);
+    border-color: #dc3545;
+    color: #ff6b7a;
+}
+
+.logout-button:active {
+    transform: scale(0.98);
+}
+
+.logout-button .bi {
+    margin-right: 0.75rem;
 }

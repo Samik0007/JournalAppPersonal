@@ -83,4 +83,12 @@ public sealed class UserService(DBcontext context) : IUserService
             throw new InvalidOperationException("Failed to change PIN.", ex);
         }
     }
+
+    public Task LogoutAsync()
+    {
+        Preferences.Set("IsLoggedIn", false);
+        Preferences.Remove("LastLoginTime");
+        
+        return Task.CompletedTask;
+    }
 }
