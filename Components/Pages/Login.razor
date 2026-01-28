@@ -1,0 +1,100 @@
+@page "/login"
+@layout EmptyLayout
+
+@inject IUserService UserService
+@inject NavigationManager Nav
+
+<div class="auth-shell">
+    <div class="auth-card">
+        <header class="auth-header">
+            <h1 class="auth-title">Journal</h1>
+            <p class="auth-subtitle">Sign in with your 4-digit PIN</p>
+        </header>
+
+        <div class="auth-body">
+            @if (mode == UserAuthMode.SetupPin)
+            {
+                <p class="auth-hint">First time here? Create a PIN.</p>
+                <label class="auth-label" for="pin-input">PIN</label>
+                <input id="pin-input" class="auth-input" placeholder="••••" inputmode="numeric" maxlength="4" autocomplete="one-time-code" @bind="pin" />
+
+                <button class="auth-button" @onclick="SavePin" disabled="@IsBusyOrInvalidPin">
+                    @(isBusy ? "Saving…" : "Save PIN")
+                </button>
+            }
+            else
+            {
+                <p class="auth-hint">Welcome back. Enter your PIN.</p>
+                <label class="auth-label" for="pin-input">PIN</label>
+                <input id="pin-input" class="auth-input" placeholder="••••" inputmode="numeric" maxlength="4" autocomplete="one-time-code" @bind="pin" />
+
+                <button class="auth-button" @onclick="LoginWithPin" disabled="@IsBusyOrInvalidPin">
+                    @(isBusy ? "Checking…" : "Login")
+                </button>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(error))
+            {
+                <div class="auth-error" role="alert">@error</div>
+            }
+        </div>
+
+        <footer class="auth-footer">
+            <span class="auth-footer-text">Black & white theme</span>
+        </footer>
+    </div>
+</div>
+
+@code {
+    private UserAuthMode mode;
+    private string pin = string.Empty;
+    private string error = string.Empty;
+    private bool isBusy;
+
+    private bool IsBusyOrInvalidPin => isBusy || pin.Length != 4 || !pin.All(char.IsDigit);
+
+    protected override async Task OnInitializedAsync()
+    {
+        mode = await UserService.GetAuthModeAsync();
+    }
+
+    private async Task SavePin()
+    {
+        error = string.Empty;
+        isBusy = true;
+        try
+        {
+            await UserService.CreateUserWithPinAsync(pin);
+            Nav.NavigateTo("/home", true);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task LoginWithPin()
+    {
+        error = string.Empty;
+        isBusy = true;
+
+        try
+        {
+            if (!await UserService.VerifyPinAsync(pin))
+            {
+                error = "Invalid PIN.";
+                return;
+            }
+
+            Nav.NavigateTo("/home", true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+}
