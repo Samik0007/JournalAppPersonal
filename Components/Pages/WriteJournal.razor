@@ -1,0 +1,430 @@
+@page "/write-journal"
+@page "/write-journal/{EntryId:guid}"
+@inject IJournalEntryService JournalService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4 journal-paper">
+        <MudText Typo="Typo.h5" Class="mb-4 journal-title">@(isEditMode ? "Edit Entry" : "New Journal Entry")</MudText>
+
+        <!-- Title -->
+        <MudTextField @bind-Value="title" 
+                      Label="Entry Title" 
+                      Variant="Variant.Outlined" 
+                      FullWidth 
+                      Class="mb-4 journal-input" />
+
+        <!-- Quill Editor -->
+        <MudPaper Elevation="0" Class="mb-4 editor-paper">
+            <div id="journal-quill" style="min-height:250px;"></div>
+        </MudPaper>
+
+        <!-- Mood Selection -->
+        <MudText Typo="Typo.h6" Class="mb-2 section-title">Mood Selection</MudText>
+        
+        <MudText Typo="Typo.subtitle2" Class="mb-2 section-subtitle">Primary Mood (required)</MudText>
+        <MudRadioGroup @bind-Value="primaryMoodGroup" Class="mb-3">
+            <MudRadio Value="@("Positive")" Class="mood-radio">Positive</MudRadio>
+            <MudRadio Value="@("Neutral")" Class="mood-radio">Neutral</MudRadio>
+            <MudRadio Value="@("Negative")" Class="mood-radio">Negative</MudRadio>
+        </MudRadioGroup>
+
+        <MudText Typo="Typo.subtitle2" Class="mb-2 section-subtitle">Secondary Moods (up to two)</MudText>
+        <div class="mood-checkboxes mb-4">
+            @foreach (var mood in GetSecondaryMoodOptions())
+            {
+                var localMood = mood;
+                <label class="mood-checkbox-label">
+                    <input type="checkbox" 
+                           checked="@IsSecondaryMoodSelected(localMood)"
+                           @onchange="@(e => SetSecondaryMoodBinding(localMood, (bool)e.Value!))"
+                           disabled="@(!IsSecondaryMoodSelected(localMood) && secondaryMoods.Count >= 2)" />
+                    <span>@localMood.ToString()</span>
+                </label>
+            }
+        </div>
+
+        <!-- Tags -->
+        <MudText Typo="Typo.h6" Class="mb-2 section-title">Tags (Optional)</MudText>
+        
+        <!-- Custom Tag Input -->
+        <MudText Typo="Typo.subtitle2" Class="mb-2 section-subtitle">Custom Tags</MudText>
+        <div class="d-flex gap-2 mb-2">
+            <MudTextField @bind-Value="customTagInput"
+                         Label="Add custom tag"
+                         Variant="Variant.Outlined"
+                         OnKeyDown="HandleCustomTagKeyDown"
+                         Class="flex-grow-1 journal-input" />
+            <MudButton Variant="Variant.Filled" 
+                       Class="bw-button"
+                       OnClick="AddCustomTag"
+                       Disabled="string.IsNullOrWhiteSpace(customTagInput)">
+                Add Custom Tag
+            </MudButton>
+        </div>
+        <MudText Typo="Typo.caption" Class="mb-3 hint-text">Press Enter or click "Add Custom Tag" to create your own tag</MudText>
+        
+        <!-- Pre-built Tags -->
+        <MudText Typo="Typo.subtitle2" Class="mb-2 section-subtitle">Pre-built Tags</MudText>
+        <MudText Typo="Typo.caption" Class="mb-2 hint-text">
+            Work, Career, Studies, Family, Friends, Relationships, Health, Fitness, Personal Growth, Self-care, 
+            Hobbies, Travel, Nature, Finance, Spirituality, Birthday, Holiday, Vacation, Celebration, Exercise, 
+            Reading, Writing, Cooking, Meditation, Yoga, Music, Shopping, Parenting, Projects, Planning, Reflection
+        </MudText>
+        <div class="prebuilt-tags-grid mb-3">
+            @foreach (var tag in availableTags.Where(t => t.IsPrebuilt).OrderBy(t => t.Name))
+            {
+                var localTag = tag;
+                var isSelected = selectedTags.Contains(localTag.Name);
+                <button type="button" 
+                        class="prebuilt-tag-button @(isSelected ? "selected" : "")"
+                        @onclick="() => TogglePrebuiltTag(localTag.Name)">
+                    @localTag.Name
+                </button>
+            }
+        </div>
+        
+        <!-- Selected Tags Display -->
+        <MudText Typo="Typo.subtitle2" Class="mb-2 section-subtitle">Selected Tags</MudText>
+        <div class="tag-chips mb-4">
+            @if (selectedTags.Any())
+            {
+                @foreach (var tag in selectedTags)
+                {
+                    var localTag = tag;
+                    var isCustom = !availableTags.Any(t => t.IsPrebuilt && t.Name.Equals(localTag, StringComparison.OrdinalIgnoreCase));
+                    <span class="tag-chip @(isCustom ? "custom-tag" : "prebuilt-tag")">
+                        <span class="tag-type-indicator">@(isCustom ? "Custom" : "Pre-built")</span>
+                        @localTag
+                        <button type="button" class="tag-remove" @onclick="@(() => RemoveTag(localTag))">×</button>
+                    </span>
+                }
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Class="hint-text">No tags selected</MudText>
+            }
+        </div>
+
+        <!-- Category -->
+        <MudGrid Class="mb-4">
+            <MudItem xs="12">
+                <MudSelect @bind-Value="category" Label="Category" Variant="Variant.Outlined" FullWidth Class="journal-input">
+                    <MudSelectItem Value="@("Personal")">Personal</MudSelectItem>
+                    <MudSelectItem Value="@("Work")">Work</MudSelectItem>
+                    <MudSelectItem Value="@("Health")">Health</MudSelectItem>
+                    <MudSelectItem Value="@("Travel")">Travel</MudSelectItem>
+                    <MudSelectItem Value="@("Learning")">Learning</MudSelectItem>
+                    <MudSelectItem Value="@("Relationships")">Relationships</MudSelectItem>
+                    <MudSelectItem Value="@("Goals")">Goals</MudSelectItem>
+                    <MudSelectItem Value="@("Other")">Other</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Action Buttons -->
+        <MudStack Row Justify="Justify.FlexEnd" Spacing="2">
+            <MudButton Variant="Variant.Outlined" 
+                       Class="bw-button-outline"
+                       OnClick="Cancel">
+                Cancel
+            </MudButton>
+            <MudButton Variant="Variant.Filled" 
+                       Class="bw-button"
+                       OnClick="SaveEntry"
+                       Disabled="isSaving">
+                @(isSaving ? "Saving..." : (isEditMode ? "Update Entry" : "Save Entry"))
+            </MudButton>
+        </MudStack>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3 bw-alert-error">@errorMessage</MudAlert>
+        }
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <MudAlert Severity="Severity.Success" Class="mt-3 bw-alert-success">@successMessage</MudAlert>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public Guid? EntryId { get; set; }
+
+    private string title = string.Empty;
+    private string description = string.Empty;
+    private string primaryMoodGroup = "Neutral";
+    private MoodCategory primaryMood = MoodCategory.Calm;
+    private List<MoodCategory> secondaryMoods = new();
+    private List<string> selectedTags = new();
+    private string category = "Personal";
+    
+    private string tagSearchTerm = string.Empty;
+    private string customTagInput = string.Empty;
+    private List<Tag> availableTags = new();
+    
+    private bool isEditMode = false;
+    private bool isSaving = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private bool _quillInitialized;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailableTags();
+        
+        if (EntryId.HasValue && EntryId.Value != Guid.Empty)
+        {
+            isEditMode = true;
+            await LoadEntry(EntryId.Value);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("journalQuill.init", "journal-quill", description);
+            _quillInitialized = true;
+        }
+        else if (_quillInitialized && isEditMode && !string.IsNullOrEmpty(description))
+        {
+            await JS.InvokeVoidAsync("journalQuill.setHtml", "journal-quill", description);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (EntryId.HasValue && EntryId.Value != Guid.Empty && !isEditMode)
+        {
+            isEditMode = true;
+            await LoadEntry(EntryId.Value);
+            
+            if (_quillInitialized && !string.IsNullOrEmpty(description))
+            {
+                await JS.InvokeVoidAsync("journalQuill.setHtml", "journal-quill", description);
+            }
+        }
+    }
+
+    private async Task LoadAvailableTags()
+    {
+        try
+        {
+            var prebuiltTags = await JournalService.GetPrebuiltTagsAsync();
+            var customTags = await JournalService.GetCustomTagsAsync();
+            availableTags = prebuiltTags.Concat(customTags).ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading tags: {ex.Message}";
+            availableTags = new List<Tag>();
+        }
+    }
+
+    private async Task LoadEntry(Guid id)
+    {
+        try
+        {
+            var entry = await JournalService.GetByIdAsync(id);
+            if (entry != null)
+            {
+                title = entry.Title;
+                description = entry.Description;
+                primaryMood = entry.PrimaryMood;
+                primaryMoodGroup = GetMoodGroup(entry.PrimaryMood);
+                category = entry.Category;
+                
+                secondaryMoods.Clear();
+                if (entry.SecondaryMood1.HasValue)
+                    secondaryMoods.Add(entry.SecondaryMood1.Value);
+                if (entry.SecondaryMood2.HasValue)
+                    secondaryMoods.Add(entry.SecondaryMood2.Value);
+
+                selectedTags = entry.JournalEntryTags?
+                    .Select(t => t.Tag?.Name ?? string.Empty)
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList() ?? new List<string>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading entry: {ex.Message}";
+        }
+    }
+
+    private string GetMoodGroup(MoodCategory mood)
+    {
+        return mood switch
+        {
+            MoodCategory.Happy or MoodCategory.Excited or MoodCategory.Relaxed 
+                or MoodCategory.Grateful or MoodCategory.Confident => "Positive",
+            MoodCategory.Sad or MoodCategory.Angry or MoodCategory.Stressed 
+                or MoodCategory.Lonely or MoodCategory.Anxious => "Negative",
+            _ => "Neutral"
+        };
+    }
+
+    private List<MoodCategory> GetSecondaryMoodOptions()
+    {
+        return primaryMoodGroup switch
+        {
+            "Positive" => new List<MoodCategory> 
+            { 
+                MoodCategory.Happy, MoodCategory.Excited, MoodCategory.Relaxed,
+                MoodCategory.Grateful, MoodCategory.Confident 
+            },
+            "Negative" => new List<MoodCategory> 
+            { 
+                MoodCategory.Sad, MoodCategory.Angry, MoodCategory.Stressed,
+                MoodCategory.Lonely, MoodCategory.Anxious 
+            },
+            _ => new List<MoodCategory> 
+            { 
+                MoodCategory.Calm, MoodCategory.Thoughtful, MoodCategory.Curious,
+                MoodCategory.Nostalgic, MoodCategory.Bored 
+            }
+        };
+    }
+
+    private bool IsSecondaryMoodSelected(MoodCategory mood) => secondaryMoods.Contains(mood);
+
+    private void SetSecondaryMoodBinding(MoodCategory mood, bool value)
+    {
+        if (value)
+        {
+            if (secondaryMoods.Count < 2 && !secondaryMoods.Contains(mood))
+                secondaryMoods.Add(mood);
+        }
+        else
+        {
+            secondaryMoods.Remove(mood);
+        }
+    }
+
+    private void AddCustomTag()
+    {
+        if (!string.IsNullOrWhiteSpace(customTagInput))
+        {
+            var trimmedTag = customTagInput.Trim();
+            if (!selectedTags.Contains(trimmedTag, StringComparer.OrdinalIgnoreCase))
+            {
+                selectedTags.Add(trimmedTag);
+                
+                if (!availableTags.Any(t => t.Name.Equals(trimmedTag, StringComparison.OrdinalIgnoreCase)))
+                {
+                    availableTags.Add(new Tag
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = trimmedTag,
+                        IsPrebuilt = false,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+            customTagInput = string.Empty;
+        }
+    }
+
+    private void TogglePrebuiltTag(string tagName)
+    {
+        if (selectedTags.Contains(tagName, StringComparer.OrdinalIgnoreCase))
+        {
+            selectedTags.Remove(tagName);
+        }
+        else
+        {
+            selectedTags.Add(tagName);
+        }
+    }
+
+    private void HandleCustomTagKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(customTagInput))
+        {
+            AddCustomTag();
+        }
+    }
+
+    private void RemoveTag(string tag)
+    {
+        selectedTags.Remove(tag);
+    }
+
+    private async Task SaveEntry()
+    {
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+        
+        description = await JS.InvokeAsync<string>("journalQuill.getHtml", "journal-quill");
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            errorMessage = "Title is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(description) || description == "<p><br></p>")
+        {
+            errorMessage = "Content is required.";
+            return;
+        }
+
+        primaryMood = primaryMoodGroup switch
+        {
+            "Positive" => MoodCategory.Happy,
+            "Negative" => MoodCategory.Sad,
+            _ => MoodCategory.Calm
+        };
+
+        isSaving = true;
+
+        try
+        {
+            MoodCategory? secondary1 = secondaryMoods.Count > 0 ? secondaryMoods[0] : null;
+            MoodCategory? secondary2 = secondaryMoods.Count > 1 ? secondaryMoods[1] : null;
+
+            if (isEditMode && EntryId.HasValue)
+            {
+                await JournalService.UpdateAsync(
+                    EntryId.Value, title, description, primaryMood, category,
+                    secondary1, secondary2, selectedTags);
+                successMessage = "Entry updated successfully!";
+            }
+            else
+            {
+                await JournalService.CreateAsync(
+                    title, description, primaryMood, category,
+                    secondary1, secondary2, selectedTags, null);
+                successMessage = "Entry saved successfully!";
+                
+                title = string.Empty;
+                description = string.Empty;
+                primaryMoodGroup = "Neutral";
+                secondaryMoods.Clear();
+                selectedTags.Clear();
+                category = "Personal";
+                await JS.InvokeVoidAsync("journalQuill.setHtml", "journal-quill", "");
+            }
+
+            await Task.Delay(1500);
+            Navigation.NavigateTo("/journal-list");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving entry: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/journal-list");
+    }
+}
