@@ -39,6 +39,7 @@ namespace JournalPersonalApp
             builder.Services.AddScoped<IThemeService, ThemeService>();
             builder.Services.AddScoped<IPdfExportService, PdfExportService>();
             builder.Services.AddScoped<IJournalEntryService, JournalEntryService>();
+            builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

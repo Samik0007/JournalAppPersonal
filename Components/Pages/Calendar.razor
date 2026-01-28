@@ -1,0 +1,319 @@
+@page "/calendar"
+@using JournalPersonalApp.Data.Models
+@using JournalPersonalApp.Data.Abstractions
+@inject IJournalEntryService JournalService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<div class="calendar-container">
+    <div class="page-header">
+        <MudText Typo="Typo.h4" Class="header-title">Journal Calendar</MudText>
+        <MudText Typo="Typo.body1" Class="header-subtitle">
+            Track your journal entries and moods throughout the month
+        </MudText>
+    </div>
+
+    <MudPaper Elevation="2" Class="calendar-paper">
+        <!-- Calendar Header with Navigation -->
+        <div class="calendar-header">
+            <MudButton Variant="Variant.Outlined" 
+                       Class="nav-button"
+                       StartIcon="@Icons.Material.Filled.ChevronLeft"
+                       OnClick="PreviousMonth">
+                Previous
+            </MudButton>
+            
+            <div class="month-year-display">
+                <MudText Typo="Typo.h5" Class="current-month">
+                    @currentDate.ToString("MMMM yyyy")
+                </MudText>
+                <MudButton Variant="Variant.Text" 
+                           Class="today-button"
+                           OnClick="GoToToday">
+                    Today
+                </MudButton>
+            </div>
+
+            <MudButton Variant="Variant.Outlined" 
+                       Class="nav-button"
+                       EndIcon="@Icons.Material.Filled.ChevronRight"
+                       OnClick="NextMonth">
+                Next
+            </MudButton>
+        </div>
+
+        <!-- Day of Week Headers -->
+        <div class="calendar-grid">
+            <div class="day-header">Sun</div>
+            <div class="day-header">Mon</div>
+            <div class="day-header">Tue</div>
+            <div class="day-header">Wed</div>
+            <div class="day-header">Thu</div>
+            <div class="day-header">Fri</div>
+            <div class="day-header">Sat</div>
+
+            <!-- Calendar Days -->
+            @foreach (var day in calendarDays)
+            {
+                <div class="@GetDayClass(day)" @onclick="() => OnDayClick(day)">
+                    <div class="day-number">@day.Day</div>
+                    @if (day.HasEntry)
+                    {
+                        <div class="entry-indicator @GetMoodIndicatorClass(day.Mood)">
+                            <span class="entry-count">@day.EntryCount</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Legend -->
+        <div class="calendar-legend">
+            <MudText Typo="Typo.subtitle2" Class="legend-title">Mood Legend:</MudText>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color mood-positive"></div>
+                    <MudText Typo="Typo.body2">Positive</MudText>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color mood-neutral"></div>
+                    <MudText Typo="Typo.body2">Neutral</MudText>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color mood-negative"></div>
+                    <MudText Typo="Typo.body2">Negative</MudText>
+                </div>
+            </div>
+        </div>
+    </MudPaper>
+
+    <!-- Selected Day Entries -->
+    @if (selectedDayEntries != null && selectedDayEntries.Any())
+    {
+        <MudPaper Elevation="2" Class="selected-day-section">
+            <div class="selected-day-header">
+                <MudText Typo="Typo.h6" Class="selected-day-title">
+                    Entries for @selectedDate.ToString("MMMM dd, yyyy")
+                </MudText>
+                <MudText Typo="Typo.body2" Class="entry-count-text">
+                    @selectedDayEntries.Count @(selectedDayEntries.Count == 1 ? "entry" : "entries")
+                </MudText>
+            </div>
+
+            <div class="entries-list">
+                @foreach (var entry in selectedDayEntries)
+                {
+                    <MudCard Elevation="1" Class="entry-card" @onclick="() => ViewEntry(entry.Id)">
+                        <MudCardContent>
+                            <div class="entry-card-header">
+                                <MudText Typo="Typo.h6" Class="entry-card-title">@entry.Title</MudText>
+                                <MudChip T="string" 
+                                         Size="MudBlazor.Size.Small" 
+                                         Class="@GetMoodChipClass(entry.PrimaryMood)"
+                                         Variant="Variant.Filled">
+                                    @GetMoodDisplayName(entry.PrimaryMood)
+                                </MudChip>
+                            </div>
+                            
+                            <MudText Typo="Typo.body2" Class="entry-preview">
+                                @((MarkupString)GetPreviewText(entry.Description))
+                            </MudText>
+
+                            @if (entry.JournalEntryTags != null && entry.JournalEntryTags.Any())
+                            {
+                                <div class="entry-tags">
+                                    @foreach (var tag in entry.JournalEntryTags.Take(3))
+                                    {
+                                        <MudChip T="string" 
+                                                 Size="MudBlazor.Size.Small" 
+                                                 Variant="Variant.Outlined"
+                                                 Class="tag-chip">
+                                            @tag.Tag?.Name
+                                        </MudChip>
+                                    }
+                                    @if (entry.JournalEntryTags.Count > 3)
+                                    {
+                                        <MudChip T="string" 
+                                                 Size="MudBlazor.Size.Small" 
+                                                 Class="tag-more">
+                                            +@(entry.JournalEntryTags.Count - 3)
+                                        </MudChip>
+                                    }
+                                </div>
+                            }
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" 
+                                       Class="view-button"
+                                       EndIcon="@Icons.Material.Filled.ArrowForward">
+                                View Entry
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                }
+            </div>
+        </MudPaper>
+    }
+</div>
+
+@code {
+    private DateTime currentDate = DateTime.Today;
+    private DateTime selectedDate = DateTime.Today;
+    private List<CalendarDay> calendarDays = new();
+    private List<Journalentry>? allEntries;
+    private List<Journalentry>? selectedDayEntries;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntries();
+        GenerateCalendar();
+    }
+
+    private async Task LoadEntries()
+    {
+        try
+        {
+            allEntries = await JournalService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading entries: {ex.Message}", Severity.Error);
+            allEntries = new List<Journalentry>();
+        }
+    }
+
+    private void GenerateCalendar()
+    {
+        calendarDays.Clear();
+        
+        var firstDayOfMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
+        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        var startDate = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
+
+        for (int i = 0; i < 42; i++) // 6 weeks * 7 days
+        {
+            var date = startDate.AddDays(i);
+            var entriesForDay = allEntries?.Where(e => e.EntryDate.Date == date.Date).ToList() ?? new List<Journalentry>();
+            
+            calendarDays.Add(new CalendarDay
+            {
+                Date = date,
+                IsCurrentMonth = date.Month == currentDate.Month,
+                IsToday = date.Date == DateTime.Today,
+                HasEntry = entriesForDay.Any(),
+                EntryCount = entriesForDay.Count,
+                Mood = entriesForDay.Any() ? entriesForDay.First().PrimaryMood : MoodCategory.Calm
+            });
+        }
+    }
+
+    private void PreviousMonth()
+    {
+        currentDate = currentDate.AddMonths(-1);
+        GenerateCalendar();
+        selectedDayEntries = null;
+    }
+
+    private void NextMonth()
+    {
+        currentDate = currentDate.AddMonths(1);
+        GenerateCalendar();
+        selectedDayEntries = null;
+    }
+
+    private void GoToToday()
+    {
+        currentDate = DateTime.Today;
+        GenerateCalendar();
+        selectedDayEntries = null;
+    }
+
+    private void OnDayClick(CalendarDay day)
+    {
+        if (day.HasEntry)
+        {
+            selectedDate = day.Date;
+            selectedDayEntries = allEntries?.Where(e => e.EntryDate.Date == day.Date.Date).ToList();
+        }
+        else
+        {
+            selectedDayEntries = null;
+        }
+    }
+
+    private void ViewEntry(Guid entryId)
+    {
+        Navigation.NavigateTo($"/edit-journal/{entryId}");
+    }
+
+    private string GetDayClass(CalendarDay day)
+    {
+        var classes = new List<string> { "calendar-day" };
+        
+        if (!day.IsCurrentMonth) classes.Add("other-month");
+        if (day.IsToday) classes.Add("today");
+        if (day.HasEntry) classes.Add("has-entry");
+        
+        return string.Join(" ", classes);
+    }
+
+    private string GetMoodIndicatorClass(MoodCategory mood)
+    {
+        return mood switch
+        {
+            MoodCategory.Happy or MoodCategory.Excited or MoodCategory.Relaxed
+                or MoodCategory.Grateful or MoodCategory.Confident => "mood-positive",
+            MoodCategory.Sad or MoodCategory.Angry or MoodCategory.Stressed
+                or MoodCategory.Lonely or MoodCategory.Anxious => "mood-negative",
+            _ => "mood-neutral"
+        };
+    }
+
+    private string GetMoodChipClass(MoodCategory mood)
+    {
+        return mood switch
+        {
+            MoodCategory.Happy or MoodCategory.Excited or MoodCategory.Relaxed
+                or MoodCategory.Grateful or MoodCategory.Confident => "mood-chip-positive",
+            MoodCategory.Sad or MoodCategory.Angry or MoodCategory.Stressed
+                or MoodCategory.Lonely or MoodCategory.Anxious => "mood-chip-negative",
+            _ => "mood-chip-neutral"
+        };
+    }
+
+    private string GetMoodDisplayName(MoodCategory mood)
+    {
+        return mood switch
+        {
+            MoodCategory.Happy or MoodCategory.Excited or MoodCategory.Relaxed
+                or MoodCategory.Grateful or MoodCategory.Confident => "Positive",
+            MoodCategory.Sad or MoodCategory.Angry or MoodCategory.Stressed
+                or MoodCategory.Lonely or MoodCategory.Anxious => "Negative",
+            _ => "Neutral"
+        };
+    }
+
+    private string GetPreviewText(string htmlContent)
+    {
+        if (string.IsNullOrEmpty(htmlContent))
+            return "<em style='color: #999;'>No content</em>";
+
+        var plainText = System.Text.RegularExpressions.Regex.Replace(htmlContent, "<.*?>", string.Empty);
+
+        if (plainText.Length <= 120)
+            return plainText;
+
+        return plainText.Substring(0, 120) + "...";
+    }
+
+    private class CalendarDay
+    {
+        public DateTime Date { get; set; }
+        public int Day => Date.Day;
+        public bool IsCurrentMonth { get; set; }
+        public bool IsToday { get; set; }
+        public bool HasEntry { get; set; }
+        public int EntryCount { get; set; }
+        public MoodCategory Mood { get; set; }
+    }
+}
