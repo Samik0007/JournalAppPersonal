@@ -1,0 +1,155 @@
+﻿@page "/settings"
+@using JournalPersonalApp.Data.Abstractions
+@inject IUserService UserService
+@inject ISnackbar Snackbar
+
+<div class="settings-container">
+    <div class="page-header">
+        <MudText Typo="Typo.h4" Class="header-title">Settings</MudText>
+        <MudText Typo="Typo.body1" Class="header-subtitle">
+            Manage your account settings
+        </MudText>
+    </div>
+
+    <!-- Change PIN Section -->
+    <MudPaper Elevation="2" Class="settings-section">
+        <div class="section-header">
+            <MudIcon Icon="@Icons.Material.Filled.Lock" Class="section-icon" />
+            <div>
+                <MudText Typo="Typo.h6" Class="section-title">Security PIN</MudText>
+                <MudText Typo="Typo.body2" Class="section-description">
+                    Update your 4-digit security PIN
+                </MudText>
+            </div>
+        </div>
+
+        <div class="pin-form-container">
+            <MudTextField @bind-Value="currentPin"
+                          Label="Current PIN"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          MaxLength="4"
+                          Class="pin-input"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.LockOpen" />
+
+            <MudTextField @bind-Value="newPin"
+                          Label="New PIN"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          MaxLength="4"
+                          Class="pin-input"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Lock" />
+
+            <MudTextField @bind-Value="confirmPin"
+                          Label="Confirm New PIN"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          MaxLength="4"
+                          Class="pin-input"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Lock" />
+
+            <div class="pin-actions">
+                <MudButton Variant="Variant.Outlined"
+                           Class="btn-clear"
+                           OnClick="ClearPinForm">
+                    Clear
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Class="btn-change-pin"
+                           OnClick="ChangePinAsync"
+                           Disabled="@isChangingPin">
+                    @if (isChangingPin)
+                    {
+                        <MudProgressCircular Size="MudBlazor.Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Changing...</span>
+                    }
+                    else
+                    {
+                        <span>Change PIN</span>
+                    }
+                </MudButton>
+            </div>
+        </div>
+    </MudPaper>
+
+    <!-- Additional Info Section -->
+    <MudPaper Elevation="1" Class="info-section">
+        <MudIcon Icon="@Icons.Material.Filled.Info" Class="info-icon" />
+        <MudText Typo="Typo.body2" Class="info-text">
+            Your PIN is encrypted and stored securely. Make sure to remember your new PIN as it cannot be recovered.
+        </MudText>
+    </MudPaper>
+</div>
+
+@code {
+    private string currentPin = string.Empty;
+    private string newPin = string.Empty;
+    private string confirmPin = string.Empty;
+    private bool isChangingPin = false;
+
+    private async Task ChangePinAsync()
+    {
+        // Validation
+        if (string.IsNullOrWhiteSpace(currentPin) || string.IsNullOrWhiteSpace(newPin) || string.IsNullOrWhiteSpace(confirmPin))
+        {
+            Snackbar.Add("All fields are required.", Severity.Warning);
+            return;
+        }
+
+        if (currentPin.Length != 4 || !currentPin.All(char.IsDigit))
+        {
+            Snackbar.Add("Current PIN must be 4 digits.", Severity.Warning);
+            return;
+        }
+
+        if (newPin.Length != 4 || !newPin.All(char.IsDigit))
+        {
+            Snackbar.Add("New PIN must be 4 digits.", Severity.Warning);
+            return;
+        }
+
+        if (newPin != confirmPin)
+        {
+            Snackbar.Add("New PIN and confirmation do not match.", Severity.Warning);
+            return;
+        }
+
+        if (currentPin == newPin)
+        {
+            Snackbar.Add("New PIN must be different from current PIN.", Severity.Warning);
+            return;
+        }
+
+        isChangingPin = true;
+
+        try
+        {
+            await UserService.ChangePinAsync(currentPin, newPin);
+            Snackbar.Add("PIN changed successfully!", Severity.Success);
+            ClearPinForm();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("An error occurred while changing PIN. Please try again.", Severity.Error);
+            Console.WriteLine($"Error changing PIN: {ex.Message}");
+        }
+        finally
+        {
+            isChangingPin = false;
+        }
+    }
+
+    private void ClearPinForm()
+    {
+        currentPin = string.Empty;
+        newPin = string.Empty;
+        confirmPin = string.Empty;
+    }
+}
