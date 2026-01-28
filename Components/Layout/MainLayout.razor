@@ -1,4 +1,13 @@
-﻿@inherits LayoutComponentBase
+﻿@using MudBlazor
+@using JournalPersonalApp.Data.Abstractions
+@inject IThemeService ThemeService
+@inherits LayoutComponentBase
+@implements IDisposable
+
+<MudThemeProvider @ref="@_mudThemeProvider" Theme="@_currentMudTheme" @bind-IsDarkMode="@_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <div class="page">
     <div class="sidebar">
@@ -7,6 +16,10 @@
 
     <main>
         <div class="top-row px-4">
+            <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                           Color="MudBlazor.Color.Inherit"
+                           OnClick="ToggleTheme"
+                           Title="@(_isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode")" />
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div>
 
@@ -15,3 +28,52 @@
         </article>
     </main>
 </div>
+
+@code {
+    private MudThemeProvider? _mudThemeProvider;
+    private bool _isDarkMode;
+    private MudTheme _currentMudTheme = new();
+
+    protected override void OnInitialized()
+    {
+        var savedTheme = ThemeService.GetTheme();
+        _isDarkMode = savedTheme == AppThemeMode.Dark;
+        
+        _currentMudTheme = new MudTheme
+        {
+            PaletteLight = new PaletteLight
+            {
+                Primary = Colors.Gray.Darken4,
+                Secondary = Colors.Gray.Darken2,
+                AppbarBackground = Colors.Gray.Lighten5,
+                Background = Colors.Shades.White,
+                Surface = Colors.Shades.White,
+                TextPrimary = Colors.Shades.Black,
+                TextSecondary = Colors.Gray.Darken1
+            },
+            PaletteDark = new PaletteDark
+            {
+                Primary = Colors.Gray.Lighten2,
+                Secondary = Colors.Gray.Lighten4,
+                AppbarBackground = Colors.Gray.Darken4,
+                Background = Colors.Gray.Darken4,
+                Surface = Colors.Gray.Darken3,
+                TextPrimary = Colors.Shades.White,
+                TextSecondary = Colors.Gray.Lighten2
+            }
+        };
+    }
+
+    private void ToggleTheme()
+    {
+        _isDarkMode = !_isDarkMode;
+        var newTheme = _isDarkMode ? AppThemeMode.Dark : AppThemeMode.Light;
+        ThemeService.SetTheme(newTheme);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        // Cleanup if needed
+    }
+}

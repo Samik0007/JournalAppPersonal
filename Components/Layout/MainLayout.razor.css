@@ -2,14 +2,16 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    background-color: #ffffff;
 }
 
 main {
     flex: 1;
+    background-color: #ffffff;
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background: #000000;
 }
 
 .top-row {
@@ -25,6 +27,7 @@ main {
         white-space: nowrap;
         margin-left: 1.5rem;
         text-decoration: none;
+        color: #000000;
     }
 
     .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
@@ -35,6 +38,10 @@ main {
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+.content {
+    color: #000000;
+}
 
 @media (max-width: 640.98px) {
     .top-row {
